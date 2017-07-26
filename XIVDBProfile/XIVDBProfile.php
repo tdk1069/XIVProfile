@@ -22,7 +22,7 @@ parent::__construct(
 __("XIVDBProfile", 'wpb_widget_domain'), 
 
 // Widget description
-array( 'description' => __( 'Retrieve and cache XIVDB Character Info - v1.2 by Brax of Moogle', 'wpb_widget_domain' ), ) 
+array( 'description' => __( 'Retrieve and cache XIVDB Character Info - v1.3 by Brax of Moogle', 'wpb_widget_domain' ), ) 
 );
 }
 
@@ -42,7 +42,7 @@ $cache_timeout = 30;
 }
 //
 //
-if ((!file_exists(plugin_dir_path(__FILE__).'cache/'.$id) || (time()-filemtime(plugin_dir_path(__FILE__).'cache/'.$id) > ($cache_timeout * 60)))) {
+if ((!file_exists(plugin_dir_path(__FILE__).'cache/'.$id) || (time()-filemtime(plugin_dir_path(__FILE__).'cache/'.$id) > ($cache_timeout * 60))) or (filesize(plugin_dir_path(__FILE__).'cache/'.$id) == 0)) {
 	$ch = curl_init("http://api.xivdb.com/character/".$id);
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 	$json = curl_exec($ch);
