@@ -22,7 +22,7 @@ parent::__construct(
 __("XIVDBProfile", 'wpb_widget_domain'), 
 
 // Widget description
-array( 'description' => __( 'Retrieve and cache XIVDB Character Info - v1.3 by Brax of Moogle', 'wpb_widget_domain' ), ) 
+array( 'description' => __( 'Retrieve and cache XIVDB Character Info - v1.4 by Brax of Moogle', 'wpb_widget_domain' ), ) 
 );
 }
 
@@ -45,21 +45,31 @@ $cache_timeout = 30;
 if ((!file_exists(plugin_dir_path(__FILE__).'cache/'.$id) || (time()-filemtime(plugin_dir_path(__FILE__).'cache/'.$id) > ($cache_timeout * 60))) or (filesize(plugin_dir_path(__FILE__).'cache/'.$id) == 0)) {
 	$ch = curl_init("http://api.xivdb.com/character/".$id);
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+	curl_setopt($ch, CURLOPT_TIMEOUT, 30);
 	$json = curl_exec($ch);
+	if(curl_errno($ch))
+	{
+		   echo __(curl_errno($ch), 'wpb_widget_domain' );
+	} else {
+		$obj = json_decode($json);
+		$fh = fopen(plugin_dir_path(__FILE__).'cache/'.$id,'w');
+		fwrite($fh,$json);
+		fclose($fh);
+	}
 	curl_close($ch);
-	$obj = json_decode($json);
-
+	
 	$ch = curl_init($obj->data->portrait);
-	$fp = fopen(plugin_dir_path(__FILE__).'cache/'.$id.'.jpg', 'wb');
+	$fp = fopen(plugin_dir_path(__FILE__).'cache/'.$id.'.jpg.tmp', 'wb');
 	curl_setopt($ch, CURLOPT_FILE, $fp);
 	curl_setopt($ch, CURLOPT_HEADER, 0);
 	curl_exec($ch);
+	if(!curl_errno($ch))
+	{
+		rename(plugin_dir_path(__FILE__).'cache/'.$id.'.jpg.tmp',plugin_dir_path(__FILE__).'cache/'.$id.'.jpg');
+	}
 	curl_close($ch);
 	fclose($fp);
 
-	$fh = fopen(plugin_dir_path(__FILE__).'cache/'.$id,'w');
-	fwrite($fh,$json);
-	fclose($fh);
 } else {
 	$fh = fopen(plugin_dir_path(__FILE__).'cache/'.$id,'r');
 	$json = fread($fh,filesize(plugin_dir_path(__FILE__).'cache/'.$id));
@@ -98,9 +108,11 @@ div.jobs {
 }
 </style>
 <?php
+if ($obj->name)
+{
 echo __("<div style='width:220px;height:300px;'>", 'wpb_widget_domain' );//220x300
 echo __("<div style='height:300px;background-image: url(".plugin_dir_url(__FILE__).'cache/'.$id.'.jpg'.");background-size: 100% 100%;'>", 'wpb_widget_domain' );
-echo __("<h1 class='BH1'>".$obj->name, 'wpb_widget_domain' );;//." [".$obj->data->server."]</h1>", 'wpb_widget_domain' );
+echo __("<h1 class='BH1'>".$obj->name, 'wpb_widget_domain' );
 echo __("<div class='jobs'>", 'wpb_widget_domain' );
    echo __("<img heigh=18 width=18 src='".plugin_dir_url(__FILE__)."img/gladiator.png' title=''>".$obj->data->classjobs->{1}->level, 'wpb_widget_domain' );
    echo __("<img heigh=18 width=18 src='".plugin_dir_url(__FILE__)."img/darkknight.png' title=''>".$obj->data->classjobs->{32}->level, 'wpb_widget_domain' );
@@ -136,6 +148,9 @@ echo __("</div>", 'wpb_widget_domain' );
 echo __("</div>", 'wpb_widget_domain' );
 //
 //
+} else {
+	echo __("<h1 class='BH1'>Unable to retrieve data", 'wpb_widget_domain' );
+}
 echo $args['after_widget'];
 }
 		
