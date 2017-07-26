@@ -22,7 +22,7 @@ parent::__construct(
 __("XIVDBProfile", 'wpb_widget_domain'), 
 
 // Widget description
-array( 'description' => __( 'Retrieve and cache XIVDB Character Info - v1.1 by Brax of Moogle', 'wpb_widget_domain' ), ) 
+array( 'description' => __( 'Retrieve and cache XIVDB Character Info - v1.2 by Brax of Moogle', 'wpb_widget_domain' ), ) 
 );
 }
 
@@ -35,9 +35,14 @@ $id = $instance[ 'id' ];
 } else {
 $id = "6318718";
 }
+if ( isset( $instance[ 'cache_timeout' ] ) ) {
+$cache_timeout = $instance[ 'cache_timeout' ];
+} else {
+$cache_timeout = 30;
+}
 //
 //
-if ((!file_exists(plugin_dir_path(__FILE__).'cache/'.$id) || (time()-filemtime(plugin_dir_path(__FILE__).'cache/'.$id) > 3600))) {
+if ((!file_exists(plugin_dir_path(__FILE__).'cache/'.$id) || (time()-filemtime(plugin_dir_path(__FILE__).'cache/'.$id) > ($cache_timeout * 60)))) {
 	$ch = curl_init("http://api.xivdb.com/character/".$id);
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 	$json = curl_exec($ch);
@@ -142,12 +147,28 @@ $id = $instance[ 'id' ];
 else {
 $id = __( 'Char ID', 'wpb_widget_domain' );
 }
+if ( isset( $instance[ 'cache_timeout' ] ) ) {
+$cache_timeout = $instance[ 'cache_timeout' ];
+}
+else {
+$cache_timeout = __( '30', 'wpb_widget_domain' );
+}
 // Widget admin form
 ?>
-<p>
+<div class="nav-menu-widget-form-controls">
 <label for="<?php echo $this->get_field_id( 'id' ); ?>"><?php _e( 'Char ID:' ); ?></label> 
 <input class="widefat" id="<?php echo $this->get_field_id( 'id' ); ?>" name="<?php echo $this->get_field_name( 'id' ); ?>" type="text" value="<?php echo esc_attr( $id ); ?>" />
-</p>
+<label for="<?php echo $this->get_field_id( 'cache_timeout' ); ?>"><?php _e( 'Cache Timeout:' ); ?></label> 
+<!--
+<select class="widefat" id="<?php echo $this->get_field_id( 'cache_timeout' ); ?>" name="<?php echo $this->get_field_name( 'cache_timeout' ); ?>"/>
+	<option value="15" <?php selected( $instance['cache_timeout'], '15'); ?>>15 Minutes</option>
+	<option value="30" <?php selected( $instance['cache_timeout'], '30'); ?>>30 Minutes</option>
+	<option value="45" <?php selected( $instance['cache_timeout'], '45'); ?>>45 Minutes</option>
+	<option value="60" <?php selected( $instance['cache_timeout'], '60'); ?>>60 Minutes</option>
+</select>
+-->
+<input class="widefat" id="<?php echo $this->get_field_id( 'cache_timeout' ); ?>" name="<?php echo $this->get_field_name( 'cache_timeout' ); ?>" type="number" value="<?php echo esc_attr( $cache_timeout ); ?>" step="15"/>
+</div>
 <?php 
 }
 	
@@ -155,6 +176,7 @@ $id = __( 'Char ID', 'wpb_widget_domain' );
 public function update( $new_instance, $old_instance ) {
 $instance = array();
 $instance['id'] = ( ! empty( $new_instance['id'] ) ) ? strip_tags( $new_instance['id'] ) : '';
+$instance['cache_timeout'] = ( ! empty( $new_instance['cache_timeout'] ) ) ? strip_tags( $new_instance['cache_timeout'] ) : '';
 return $instance;
 }
 } // Class wpb_widget ends here
